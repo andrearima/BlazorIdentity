@@ -1,0 +1,93 @@
+﻿@page "/RoleCreateOrUpdate/{Id?}"
+
+@using Microsoft.AspNetCore.Identity
+@inject IRoleService _roleService
+
+<MudCard Class="mt-6" MaxWidth="300px" Width="300px">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Cadastro de Role</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudDivider />
+    <MudCardContent>
+        @if (!string.IsNullOrEmpty(@Id))
+        {
+            <MudTextField @bind-Value="Id" Label="Id da Role" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+        }
+
+        <MudTextField @bind-Value="roleName" Label="Nome da Role" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+    </MudCardContent>
+    <MudPaper Class="pa-4 justify-center my-4 mud-text-align-center">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Cadastrar())">Salvar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(() => Limpar())" Class="mx-2">Limpar</MudButton>
+    </MudPaper>
+</MudCard>
+
+@if (ShowMessage)
+{
+    <MudCard Class="mt-6" MaxWidth="300px" Width="300px">
+        <MudCardContent>
+
+            @foreach (var msg in @Mensagens)
+            {
+                if (Erro)
+                {
+                    <MudAlert Severity="Severity.Error">@msg</MudAlert>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Success">@msg</MudAlert>
+                }
+            }
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+    private IdentityRole role;
+    private string roleName;
+    private bool ShowMessage;
+    private bool Erro;
+    private List<string> Mensagens = new List<string>();
+
+    private void Limpar()
+    {
+        roleName = "";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(Id))
+        {
+            var result = await _roleService.GetRoles(null, Id);
+            if (result.Success)
+                role = result.Mensagens.FirstOrDefault().DeserializeJsonToObject<List<IdentityRole>>().FirstOrDefault();
+        }
+    }
+
+
+    private async Task Cadastrar()
+    {
+        if (string.IsNullOrWhiteSpace(roleName))
+        {
+            Erro = true;
+            ShowMessage = true;
+            Mensagens = new List<string> { "É necessário informar o nome da Role" };
+            return;
+        }
+
+        ShowMessage = false;
+        Erro = false;
+        var result = await _roleService.Cadastrar(roleName);
+        if (!result.Success)
+        {
+            Erro = true;
+        }
+        Mensagens = result.Mensagens;
+        ShowMessage = true;
+    }
+
+}

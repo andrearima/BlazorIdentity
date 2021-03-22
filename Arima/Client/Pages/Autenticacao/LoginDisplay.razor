@@ -1,0 +1,16 @@
+﻿
+<AuthorizeView>
+    <Authorized>
+        Olá, @context.User.Identity.Name!
+        <a href="LogOut"><span class="oi oi-account-logout"></span>&nbsp Sair</a>
+    </Authorized>
+    <NotAuthorized>
+        <a href="Register">Registrar</a>
+        <a href="Login"><span class="oi oi-account-login"></span>&nbsp Logar</a>
+    </NotAuthorized>
+    
+</AuthorizeView>
+
+<AuthorizeView Roles="admin, superuser">
+    <p>You can only see this if you're an admin or superuser.</p>
+</AuthorizeView>

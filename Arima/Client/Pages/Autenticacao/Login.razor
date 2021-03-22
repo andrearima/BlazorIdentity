@@ -1,0 +1,99 @@
+﻿@page "/"
+@inject IAuthService AuthService
+@inject NavigationManager NavManager
+@using System.Text.RegularExpressions
+@using System.ComponentModel.DataAnnotations
+
+@layout LoginLayout
+
+<div>
+    <MudCard Class="mt-6">
+        <MudCardContent>
+            <EditForm Model="loginModel" @bind-IsValid="@success" @bind-Errors="@Error">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <MudTextField T="string"
+                              Label="Email"
+                              Required="true"
+                              RequiredError="Informe o Email!"
+                              @bind-Value="@loginModel.Email"
+                              Validation="@(new EmailAddressAttribute() {ErrorMessage = "O email é inválido"})" />
+                <MudTextField T="string"
+                              Label="Senha"
+                              @bind-Value="@loginModel.Senha"
+                              InputType="InputType.Password"
+                              @ontouchenter="@( () => Logar())"
+                              Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))" Required="true"
+                              RequiredError="Informe a Senha!" />
+
+            </EditForm>
+        </MudCardContent>
+    </MudCard>
+
+    <MudPaper Class="pa-4 justify-center my-4 mud-text-align-center">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>  Logar() )">Logar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(()=>Limpar())" Class="mx-2">Limpar</MudButton>
+    </MudPaper>
+
+    @if (ShowErrors)
+    {
+        @foreach (var erro in @Error)
+        {
+            <MudAlert Severity="Severity.Error">@erro</MudAlert>
+        }
+    }
+</div>
+
+@code{
+    private LoginModel loginModel = new LoginModel();
+    private bool ShowErrors;
+    private List<string> Error;
+    bool success;
+
+    private IEnumerable<string> PasswordStrength(string pw)
+    {
+        if (string.IsNullOrWhiteSpace(pw))
+        {
+            yield return "Informe a Senha!";
+            yield break;
+        }
+        //if (pw.Length < 8)
+        //    yield return "Password must be at least of length 8";
+        //if (!Regex.IsMatch(pw, @"[A-Z]"))
+        //    yield return "Password must contain at least one capital letter";
+        //if (!Regex.IsMatch(pw, @"[a-z]"))
+        //    yield return "Password must contain at least one lowercase letter";
+        //if (!Regex.IsMatch(pw, @"[0-9]"))
+        //    yield return "Password must contain at least one digit";
+    }
+
+    private async Task Logar()
+    {
+        ShowErrors = false;
+        try
+        {
+            var result = await AuthService.Login(loginModel);
+            if (result.Success)
+            {
+                NavManager.NavigateTo("/home");
+            }
+            else
+            {
+                Error = result.Mensagens;
+                ShowErrors = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Error = new List<string> { ex.Message };
+            ShowErrors = true;
+        }
+    }
+
+    private async Task Limpar()
+    {
+        loginModel.Email = "";
+        loginModel.Senha = "";
+    }
+}

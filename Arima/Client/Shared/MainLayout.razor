@@ -1,0 +1,51 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<AuthorizeView>
+
+    <Authorized>
+        <div class="page">
+            <div class="sidebar">
+                <NavMenu />
+            </div>
+
+            <div class="main">
+                <div class="top-row px-4">
+                    <a href="http://blazor.net" target="_blank" class="ml-md-auto">About</a>
+                </div>
+
+                <div class="content px-4">
+                    @Body
+                </div>
+            </div>
+        </div>
+    </Authorized>
+
+    <Authorizing>
+        <h1>Logando no Sistema!</h1>
+    </Authorizing>
+
+    <NotAuthorized>
+        <Login />
+    </NotAuthorized>
+</AuthorizeView>
+
+
+@code{
+    public int spacing { get; set; } = 2;
+    void AddSpacing()
+    {
+        if (spacing >= 10)
+        {
+            spacing = 0;
+        }
+        else
+        {
+            spacing += 1;
+        }
+        StateHasChanged();
+    }
+}

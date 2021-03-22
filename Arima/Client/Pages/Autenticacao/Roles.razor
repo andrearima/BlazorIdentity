@@ -1,0 +1,114 @@
+﻿@page "/roles"
+
+@using System.Net.Http.Json
+@using Microsoft.AspNetCore.Identity
+@inject HttpClient httpClient
+@inject IRoleService _roleServices
+@inject NavigationManager _navManager
+@inject IDialogService _dialogService
+
+<MudTable Items="@Elements"
+          Dense="@dense"
+          Hover="@hover"
+          Bordered="@bordered"
+          Striped="@striped"
+          Filter="new Func<IdentityRole,bool>(FilterFunc)"
+          @bind-SelectedItem="selectedItem">
+
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Roles</MudText>
+        <MudToolBarSpacer />
+        <MudFab Color="Color.Primary" Icon="@Icons.Material.Filled.LibraryAdd" Size="Size.Small" IconSize="Size.Small" OnClick="@(() => Editar(null))" />
+        <MudToolBarSpacer />
+        <MudTextField @bind-Value="searchString"
+                      Placeholder="Search"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium" Class="mt-0"></MudTextField>
+
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>Id</MudTh>
+        <MudTh>Nome</MudTh>
+        <MudTh>Nome Normalizado</MudTh>
+        <MudTh>Ações</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Nr">@context.Id</MudTd>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Sign">@context.NormalizedName</MudTd>
+        <MudTd>
+            <MudFab Color="Color.Warning" Icon="@Icons.Material.Filled.Edit" Size="Size.Small" IconSize="Size.Small" OnClick="@(() => Editar(context.Id))" />
+            <MudFab Color="Color.Error" Icon="@Icons.Material.Filled.DeleteSweep" Size="Size.Small" IconSize="Size.Small" OnClick="@(() => Excluir(context.Id))" />
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+<MudToolBar>
+    <MudSwitch @bind-Checked="@hover" Color="Color.Primary">Hover</MudSwitch>
+    <MudSwitch @bind-Checked="@dense" Color="Color.Secondary">Dense</MudSwitch>
+    <MudSwitch @bind-Checked="@striped" Color="Color.Tertiary">Striped</MudSwitch>
+    <MudSwitch @bind-Checked="@bordered" Color="Color.Warning">Bordered</MudSwitch>
+    <MudToolBarSpacer />
+    <div style="min-width:200px;">
+        <MudText Inline="true">Selected: @selectedItem?.Name</MudText>
+    </div>
+</MudToolBar>
+
+
+@code {
+    private bool dense = false;
+    private bool hover = true;
+    private bool striped = false;
+    private bool bordered = false;
+    private string searchString = "";
+    private IdentityRole selectedItem = null;
+    private HashSet<IdentityRole> selectedItems = new HashSet<IdentityRole>();
+    private IEnumerable<IdentityRole> Elements = new List<IdentityRole>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await _roleServices.GetRoles(null, null);
+        if (result.Success)
+            Elements = result.Mensagens.FirstOrDefault().DeserializeJsonToObject<List<IdentityRole>>();
+    }
+
+    private bool FilterFunc(IdentityRole role)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (role.NormalizedName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (role.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if ($"{role.Name} {role.NormalizedName}".Contains(searchString))
+            return true;
+        return false;
+    }
+
+    private void Editar(string roleId)
+    {
+        string url = "/RoleCreateOrUpdate";
+        if (!string.IsNullOrEmpty(roleId))
+            url += $"/{roleId}";
+
+        _navManager.NavigateTo(url);
+    }
+    private async Task Excluir(string roleId)
+    {
+        var role = Elements.Where(x => x.Id.Equals(roleId)).FirstOrDefault();
+        var parameters = new DialogParameters();
+        parameters.Add("ContentText", $"Confirma exclusão da Role: {role.Name}? Este processo é irreverssível.");
+        parameters.Add("ButtonText", "Excluir");
+        parameters.Add("RoleId", role.Id);
+        parameters.Add("Color", Color.Error);
+        
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+
+        _dialogService.Show<RoleDialogDelete>("Delete", parameters, options);
+
+    }
+
+}

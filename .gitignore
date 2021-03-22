@@ -1,0 +1,14 @@
+.vs/
+/bin
+/obj
+*/bin
+*/obj
+*/bin/*
+*/obj/*
+Arima/Client/bin/
+Arima/Client/obj/
+Arima/Server/bin/Debug/net5.0/appsettings.Development.json
+Arima/Server/bin/
+Arima/Server/obj/
+Arima/Shared/bin/
+Arima/Shared/obj/
