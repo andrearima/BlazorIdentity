@@ -24,15 +24,14 @@ namespace Arima.Client.Services
             var role = new IdentityRole(roleName);
             var roleNameJson = role.SerializeToJson();
 
-            var response = await _httpClient.PostAsync("api/roles", new StringContent(roleNameJson, Encoding.UTF8, "application/json"));
+            var response = await _httpClient.PostAsync("api/roles", new StringContent(roleNameJson, Encoding.UTF8, "application/json")); 
+
             return (await response.Content.ReadAsStringAsync()).DeserializeJsonToObject<DefaultResponse>();
         }
-        public async Task<DefaultResponse> GetRoles(string roleName, string roleId)
+        public async Task<DefaultResponse> GetRoles(string roleId)
         {
             var uri = "api/roles";
-            if (!string.IsNullOrWhiteSpace(roleName))
-                uri += $"?nome={roleName}";
-            else if (!string.IsNullOrWhiteSpace(roleId))
+            if (!string.IsNullOrWhiteSpace(roleId))
                 uri += $"?roleId={roleId}";
 
             var response = await _httpClient.GetAsync(uri);

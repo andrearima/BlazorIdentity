@@ -1,9 +1,9 @@
-﻿@page "/roles"
+﻿@page "/Usuarios"
 
 @using System.Net.Http.Json
 @using Microsoft.AspNetCore.Identity
 @inject HttpClient httpClient
-@inject IRoleService _roleServices
+@inject IUsuarioService _usuarioServices
 @inject NavigationManager _navManager
 @inject IDialogService _dialogService
 
@@ -12,11 +12,11 @@
           Hover="@hover"
           Bordered="@bordered"
           Striped="@striped"
-          Filter="new Func<IdentityRole,bool>(FilterFunc)"
+          Filter="new Func<Usuario,bool>(FilterFunc)"
           @bind-SelectedItem="selectedItem">
 
     <ToolBarContent>
-        <MudText Typo="Typo.h6">Roles</MudText>
+        <MudText Typo="Typo.h6">Usuarios</MudText>
         <MudToolBarSpacer />
         <MudFab Color="Color.Primary" Icon="@Icons.Material.Filled.LibraryAdd" Size="Size.Small" IconSize="Size.Small" OnClick="@(() => Editar(null))" />
         <MudToolBarSpacer />
@@ -30,13 +30,13 @@
     <HeaderContent>
         <MudTh>Id</MudTh>
         <MudTh>Nome</MudTh>
-        <MudTh>Nome Normalizado</MudTh>
+        <MudTh>Sobrenome</MudTh>
         <MudTh>Ações</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Nr">@context.Id</MudTd>
-        <MudTd DataLabel="Name">@context.Name</MudTd>
-        <MudTd DataLabel="Sign">@context.NormalizedName</MudTd>
+        <MudTd DataLabel="Name">@context.Nome</MudTd>
+        <MudTd DataLabel="Sign">@context.SobreNome</MudTd>
         <MudTd>
             <MudFab Color="Color.Warning" Icon="@Icons.Material.Filled.Edit" Size="Size.Small" IconSize="Size.Small" OnClick="@(() => Editar(context.Id))" />
             <MudFab Color="Color.Error" Icon="@Icons.Material.Filled.DeleteSweep" Size="Size.Small" IconSize="Size.Small" OnClick="@(() => Excluir(context.Id))" />
@@ -53,7 +53,7 @@
     <MudSwitch @bind-Checked="@bordered" Color="Color.Warning">Bordered</MudSwitch>
     <MudToolBarSpacer />
     <div style="min-width:200px;">
-        <MudText Inline="true">Selected: @selectedItem?.Name</MudText>
+        <MudText Inline="true">Selected: @selectedItem?.Nome</MudText>
     </div>
 </MudToolBar>
 
@@ -64,43 +64,43 @@
     private bool striped = false;
     private bool bordered = false;
     private string searchString = "";
-    private IdentityRole selectedItem = null;
-    private HashSet<IdentityRole> selectedItems = new HashSet<IdentityRole>();
-    private IEnumerable<IdentityRole> Elements = new List<IdentityRole>();
+    private Usuario selectedItem = null;
+    private HashSet<Usuario> selectedItems = new HashSet<Usuario>();
+    private IEnumerable<Usuario> Elements = new List<Usuario>();
 
     protected override async Task OnInitializedAsync()
     {
-        var result = await _roleServices.GetRoles(null);
+        var result = await _usuarioServices.GetUsuarios(null);
         if (result.Success)
-            Elements = result.Mensagens.FirstOrDefault().DeserializeJsonToObject<List<IdentityRole>>();
+            Elements = result.Mensagens.FirstOrDefault().DeserializeJsonToObject<List<Usuario>>();
     }
 
-    private bool FilterFunc(IdentityRole role)
+    private bool FilterFunc(Usuario usuario)
     {
         if (string.IsNullOrWhiteSpace(searchString))
             return true;
-        if (role.NormalizedName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+        if (usuario.Nome.Contains(searchString, StringComparison.OrdinalIgnoreCase))
             return true;
-        if (role.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+        if (usuario.UserName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
             return true;
-        if ($"{role.Name} {role.NormalizedName}".Contains(searchString))
+        if ($"{usuario.UserName} {usuario.Nome} {usuario.SobreNome} {usuario.Email}".Contains(searchString))
             return true;
         return false;
     }
 
-    private void Editar(string roleId)
+    private void Editar(string usuarioId)
     {
-        string url = "/RoleCreateOrUpdate";
-        if (!string.IsNullOrEmpty(roleId))
-            url += $"/{roleId}";
+        string url = "/UsuariosCreateOrUpdate";
+        if (!string.IsNullOrEmpty(usuarioId))
+            url += $"/{usuarioId}";
 
         _navManager.NavigateTo(url);
     }
-    private async Task Excluir(string roleId)
+    private async Task Excluir(string usuarioId)
     {
-        var role = Elements.Where(x => x.Id.Equals(roleId)).FirstOrDefault();
+        var usuario = Elements.Where(x => x.Id.Equals(usuarioId)).FirstOrDefault();
         var parameters = new DialogParameters();
-        parameters.Add("ContentText", $"Confirma exclusão da Role: {role.Name}? Este processo é irreverssível.");
+        parameters.Add("ContentText", $"Confirma exclusão do Usuario: {usuario.Nome}? Este processo é irreverssível.");
         parameters.Add("ButtonText", "Excluir");
         parameters.Add("Color", Color.Error);
 
@@ -109,18 +109,18 @@
         var dialoag = _dialogService.Show<DialogDelete>("Delete", parameters, options);
         if (!(await dialoag.Result).Cancelled)
         {
-            var defaultResponse = await _roleServices.DeleteRole(roleId);
+            var defaultResponse = await _usuarioServices.DeleteUsuario(usuarioId);
 
             if (defaultResponse.Success)
             {
                 var cp = Elements.ToList();
-                cp.Remove(role);
+                cp.Remove(usuario);
                 Elements = cp;
                 ShouldRender();
 
 
                 parameters = new DialogParameters();
-                parameters.Add("ContentText", $"Role: {role.Name}. Foi excluída com sucesso");
+                parameters.Add("ContentText", $"Usuario: {usuario.Nome}. Foi excluída com sucesso");
                 parameters.Add("ButtonText", "Ok");
                 parameters.Add("Color", Color.Success);
                 parameters.Add("ShowCancelButton", false);
@@ -130,7 +130,7 @@
             else
             {
                 parameters = new DialogParameters();
-                parameters.Add("ContentText", $"Oops.. Role: {role.Name}. Não foi excluida.");
+                parameters.Add("ContentText", $"Oops.. Usuario: {usuario.Nome}. Não foi excluida.");
                 parameters.Add("ButtonText", "Ok");
                 parameters.Add("Color", Color.Info);
                 parameters.Add("ShowCancelButton", false);

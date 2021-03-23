@@ -9,7 +9,7 @@ namespace Arima.Client.Services
     public interface IRoleService
     {
         Task<DefaultResponse> Cadastrar(string roleName);
-        Task<DefaultResponse> GetRoles(string roleName, string roleId);
+        Task<DefaultResponse> GetRoles(string roleId);
         Task<DefaultResponse> DeleteRole(string roleId);
     }
 }

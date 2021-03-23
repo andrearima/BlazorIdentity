@@ -6,51 +6,61 @@
 
 @layout LoginLayout
 
-<div>
-    <MudCard Class="mt-6">
-        <MudCardContent>
-            <EditForm Model="loginModel" @bind-IsValid="@success" @bind-Errors="@Error">
-                <DataAnnotationsValidator />
-                <ValidationSummary />
+@if (@carregando)
+{
+    <Loading></Loading>
+}
+else
+{
+    <div>
+        <MudCard Class="mt-6">
+            <MudCardContent>
+                <EditForm Model="loginModel" @bind-IsValid="@success" @bind-Errors="@Error">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
 
-                <MudTextField T="string"
-                              Label="Email"
-                              Required="true"
-                              RequiredError="Informe o Email!"
-                              @bind-Value="@loginModel.Email"
-                              Validation="@(new EmailAddressAttribute() {ErrorMessage = "O email é inválido"})" />
-                <MudTextField T="string"
-                              Label="Senha"
-                              @bind-Value="@loginModel.Senha"
-                              InputType="InputType.Password"
-                              @ontouchenter="@( () => Logar())"
-                              Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))" Required="true"
-                              RequiredError="Informe a Senha!" />
+                    <MudTextField T="string"
+                                  Label="Email"
+                                  Required="true"
+                                  RequiredError="Informe o Email!"
+                                  @bind-Value="@loginModel.Email"
+                                  OnKeyUp="KeyUpEvent"
+                                  Validation="@(new EmailAddressAttribute() {ErrorMessage = "O email é inválido"})" />
+                    
+                    <MudTextField T="string"
+                                  Label="Senha"
+                                  @bind-Value="@loginModel.Senha"
+                                  InputType="InputType.Password"
+                                  @ontouchenter="@( () => Logar())"
+                                  Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))" Required="true"
+                                  OnKeyUp="KeyUpEvent"
+                                  RequiredError="Informe a Senha!" />
 
-            </EditForm>
-        </MudCardContent>
-    </MudCard>
+                </EditForm>
+            </MudCardContent>
+        </MudCard>
 
-    <MudPaper Class="pa-4 justify-center my-4 mud-text-align-center">
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>  Logar() )">Logar</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(()=>Limpar())" Class="mx-2">Limpar</MudButton>
-    </MudPaper>
+        <MudPaper Class="pa-4 justify-center my-4 mud-text-align-center">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(()=>  Logar() )">Logar</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(()=>Limpar())" Class="mx-2">Limpar</MudButton>
+        </MudPaper>
 
-    @if (ShowErrors)
-    {
-        @foreach (var erro in @Error)
+        @if (ShowErrors)
         {
-            <MudAlert Severity="Severity.Error">@erro</MudAlert>
+            @foreach (var erro in @Error)
+            {
+                <MudAlert Severity="Severity.Error">@erro</MudAlert>
+            }
         }
-    }
-</div>
+    </div>
+}
 
 @code{
     private LoginModel loginModel = new LoginModel();
     private bool ShowErrors;
     private List<string> Error;
     bool success;
-
+    bool carregando = false;
     private IEnumerable<string> PasswordStrength(string pw)
     {
         if (string.IsNullOrWhiteSpace(pw))
@@ -58,19 +68,21 @@
             yield return "Informe a Senha!";
             yield break;
         }
-        //if (pw.Length < 8)
-        //    yield return "Password must be at least of length 8";
-        //if (!Regex.IsMatch(pw, @"[A-Z]"))
-        //    yield return "Password must contain at least one capital letter";
-        //if (!Regex.IsMatch(pw, @"[a-z]"))
-        //    yield return "Password must contain at least one lowercase letter";
-        //if (!Regex.IsMatch(pw, @"[0-9]"))
-        //    yield return "Password must contain at least one digit";
     }
 
     private async Task Logar()
     {
         ShowErrors = false;
+
+        if (!PodeLogar())
+        {
+            ShowErrors = true;
+            return;
+        }
+
+        carregando = true;
+
+
         try
         {
             var result = await AuthService.Login(loginModel);
@@ -89,11 +101,41 @@
             Error = new List<string> { ex.Message };
             ShowErrors = true;
         }
+        carregando = false;
     }
 
     private async Task Limpar()
     {
         loginModel.Email = "";
         loginModel.Senha = "";
+    }
+    private bool PodeLogar()
+    {
+        Error = new List<string>();
+        if (loginModel == null)
+        {
+            Error.Add("é necessário informar login e senha");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(loginModel.Email))
+        {
+            Error.Add("é necessário informar login");
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(loginModel.Senha))
+        {
+            Error.Add("é necessário informar senha");
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task KeyUpEvent(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await Logar();
+
     }
 }

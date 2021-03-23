@@ -62,9 +62,12 @@
     {
         if (!string.IsNullOrEmpty(Id))
         {
-            var result = await _roleService.GetRoles(null, Id);
+            var result = await _roleService.GetRoles(Id);
             if (result.Success)
+            {
                 role = result.Mensagens.FirstOrDefault().DeserializeJsonToObject<List<IdentityRole>>().FirstOrDefault();
+                roleName = role.Name;
+            }
         }
     }
 

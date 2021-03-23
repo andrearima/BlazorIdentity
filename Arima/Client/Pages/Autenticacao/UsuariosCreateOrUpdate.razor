@@ -1,0 +1,125 @@
+﻿@page "/UsuariosCreateOrUpdate/{Id?}"
+
+@using Microsoft.AspNetCore.Identity
+@inject IUsuarioService _usuarioServices
+
+<MudCard Class="mt-6">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Cadastro de Usuário</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudDivider />
+    <MudCardContent>
+        <EditForm Model="@usuario" OnValidSubmit="@HandleValidSubmit" @bind-IsValid="@success" @bind-Errors="@Mensagens">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            @if (!string.IsNullOrEmpty(@Id))
+            {
+                <MudTextField @bind-Value="Id" Label="Id do Usuario" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+            }
+
+            <MudGrid>
+                <MudItem xl="3" lg="4" md="4" sm="6" xs="12">
+                    <MudTextField @bind-Value="usuario.Nome" Label="Nome" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                </MudItem>
+                <MudItem xl="3" lg="4" md="4" sm="6" xs="12">
+                    <MudTextField @bind-Value="usuario.SobreNome" Label="Sobrenome" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                </MudItem>
+                <MudItem xl="3" lg="4" md="4" sm="6" xs="12">
+                    <MudTextField Class="d-flex mud-width-full" @bind-Value="usuario.Cpf" Label="Cpf" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                </MudItem>
+                <MudItem xl="3" lg="4" md="4" sm="6" xs="12">
+                    <MudDatePicker Class="d-flex mud-width-full" @bind-Value="usuario.DataNascimento" Label="Data Nascimento" Variant="Variant.Text" Margin="Margin.Dense"></MudDatePicker>
+                </MudItem>
+                <MudItem xl="3" lg="4" md="4" sm="6" xs="12">
+                    <MudTextField Class="d-flex mud-width-full" @bind-Value="usuario.Email" Label="Email" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                </MudItem>
+                <MudItem xl="3" lg="4" md="4" sm="6" xs="12">
+                    <MudTextField Class="d-flex mud-width-full" @bind-Value="usuario.Celular" Label="Celular" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </MudCardContent>
+    <MudPaper Class="pa-4 justify-center my-4 mud-text-align-center">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Cadastrar())">Salvar</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(() => Limpar())" Class="mx-2">Limpar</MudButton>
+    </MudPaper>
+</MudCard>
+
+@if (ShowMessage)
+{
+    <MudCard Class="mt-6" MaxWidth="300px" Width="300px">
+        <MudCardContent>
+
+            @foreach (var msg in @Mensagens)
+            {
+                if (Erro)
+                {
+                    <MudAlert Severity="Severity.Error">@msg</MudAlert>
+                }
+                else
+                {
+                    <MudAlert Severity="Severity.Success">@msg</MudAlert>
+                }
+            }
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+    private Usuario usuario = new Usuario();
+    private bool ShowMessage;
+    private bool Erro;
+    private bool success;
+    private List<string> Mensagens = new List<string>();
+
+    private void Limpar()
+    {
+        usuario = new Usuario();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(Id))
+        {
+            var result = await _usuarioServices.GetUsuarios(Id);
+            if (result.Success)
+            {
+                var resultado = result.Mensagens.FirstOrDefault().DeserializeJsonToObject<List<Usuario>>().FirstOrDefault();
+                usuario = result.Mensagens.FirstOrDefault().DeserializeJsonToObject<List<Usuario>>().FirstOrDefault();
+            }
+        }
+    }
+
+
+    private async Task Cadastrar()
+    {
+        if (string.IsNullOrWhiteSpace(usuario.Nome))
+        {
+            Erro = true;
+            ShowMessage = true;
+            Mensagens = new List<string> { "É necessário informar o nome do Usuário" };
+            return;
+        }
+
+        ShowMessage = false;
+        Erro = false;
+        var result = await _usuarioServices.Cadastrar(usuario);
+        if (!result.Success)
+        {
+            Erro = true;
+        }
+        Mensagens = result.Mensagens;
+        ShowMessage = true;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+
+    }
+
+}

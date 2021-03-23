@@ -3,15 +3,17 @@ using System;
 using Arima.Data.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Arima.Data.Repository.Migrations
 {
     [DbContext(typeof(ArimaContext))]
-    partial class ArimaContextModelSnapshot : ModelSnapshot
+    [Migration("20210323110527_usuarioProperties")]
+    partial class usuarioProperties
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

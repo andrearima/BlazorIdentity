@@ -11,28 +11,25 @@ namespace Arima.Server.Controllers.Autenticacao
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class RolesController : ControllerBase
+    public class UsuarioController : ControllerBase
     {
-        private readonly RoleManager<IdentityRole> _roleManager;
-        public RolesController(
-            RoleManager<IdentityRole> roleManager)
+        private readonly UserManager<Usuario> _userManager;
+        public UsuarioController(UserManager<Usuario> userManager)
         {
-            _roleManager = roleManager;
+            _userManager = userManager;
         }
-        [HttpPost]
-        public async Task<IActionResult> Post([FromBody] IdentityRole role)
+
+
+        [HttpGet]
+        public async Task<IActionResult> Get(string usuarioId)
         {
             try
             {
-                var result = await _roleManager.CreateAsync(role);
-                if (!result.Succeeded)
-                {
-                    var errors = result.Errors.Select(x => x.Description).ToList();
-
-                    return BadRequest(new DefaultResponse() { Success = false, Mensagens = errors });
-                }
-
-                return Ok(new DefaultResponse() { Success = true, Mensagens = new List<string> { $"Cadastro da role '{role.Name}' com sucesso!" } });
+                List<Usuario> usuarios = new List<Usuario>();
+                if (string.IsNullOrWhiteSpace(usuarioId))
+                    return Ok(_userManager.Users.ToList());
+                else
+                    return Ok(_userManager.Users.Where(x => x.Id.Equals(usuarioId)).ToList());
             }
             catch (Exception ex)
             {
@@ -42,18 +39,21 @@ namespace Arima.Server.Controllers.Autenticacao
                 return BadRequest(new DefaultResponse { Success = false, Mensagens = new List<string> { ex.Message } });
             }
         }
-        [HttpGet]
-        public IActionResult Get(string nome, string roleId)
+
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] Usuario usuario)
         {
             try
             {
-                if (!string.IsNullOrWhiteSpace(roleId))
-                    return Ok(_roleManager.Roles.Where(x => x.Id == roleId).ToList());
+                var result = await _userManager.CreateAsync(usuario);
+                if (!result.Succeeded)
+                {
+                    var errors = result.Errors.Select(x => x.Description).ToList();
 
-                if (string.IsNullOrWhiteSpace(nome))
-                    return Ok(_roleManager.Roles.ToList());
+                    return BadRequest(new DefaultResponse() { Success = false, Mensagens = errors });
+                }
 
-                return Ok(_roleManager.Roles.Where(x => x.NormalizedName.Contains(nome.ToUpper())).ToList());
+                return Ok(new DefaultResponse() { Success = true, Mensagens = new List<string> { $"Cadastro da role '{usuario.Nome}' com sucesso!" } });
             }
             catch (Exception ex)
             {
@@ -64,18 +64,18 @@ namespace Arima.Server.Controllers.Autenticacao
             }
         }
         [HttpDelete]
-        public async Task<IActionResult> Delete(string roleId)
+        public async Task<IActionResult> Delete(string usuarioId)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(roleId))
-                    return BadRequest(new DefaultResponse { Success = false, Mensagens = new List<string> { "É necessário informar o Id da Role." } });
+                if (string.IsNullOrWhiteSpace(usuarioId))
+                    return BadRequest(new DefaultResponse { Success = false, Mensagens = new List<string> { "É necessário informar o Id do Usuário." } });
 
-                var role = _roleManager.Roles.Where(x => x.Id.Equals(roleId)).ToList().FirstOrDefault();
-                if(role == null)
-                    return BadRequest(new DefaultResponse { Success = false, Mensagens = new List<string> { "Role não existe." } });
+                var usuario = _userManager.Users.Where(x => x.Id.Equals(usuarioId)).ToList().FirstOrDefault();
+                if (usuario == null)
+                    return BadRequest(new DefaultResponse { Success = false, Mensagens = new List<string> { "Usuario não existe." } });
 
-                var result = await _roleManager.DeleteAsync(role);
+                var result = await _userManager.DeleteAsync(usuario);
                 if (!result.Succeeded)
                 {
                     var errors = result.Errors.Select(x => x.Description).ToList();
@@ -83,7 +83,7 @@ namespace Arima.Server.Controllers.Autenticacao
                     return BadRequest(new DefaultResponse() { Success = false, Mensagens = errors });
                 }
 
-                return Ok(new DefaultResponse() { Success = true, Mensagens = new List<string> { $"Role '{role.Name}' excluída com sucesso!" } });
+                return Ok(new DefaultResponse() { Success = true, Mensagens = new List<string> { $"Usuario '{usuario.Nome}' excluída com sucesso!" } });
             }
             catch (Exception ex)
             {
